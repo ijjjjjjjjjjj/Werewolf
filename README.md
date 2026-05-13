@@ -13,6 +13,9 @@ Nếu bạn mới tải tool về, hãy thực hiện các lệnh sau trong Term
    ```bash
    git clone https://github.com/ijjjjjjjjjjj/Werewolf.git
    cd Werewolf
+   chmod +x start.sh
+   
+
 
 ### Tại sao làm vậy là "đàng hoàng"?
 1.  **Chủ động sửa lỗi:** Người dùng không cần biết `sed` là gì, file `start.sh` sẽ tự "dọn rác" cho họ ngay khi vừa chạy.
