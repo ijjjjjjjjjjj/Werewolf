@@ -18,10 +18,7 @@ Nếu bạn mới tải tool về, hãy thực hiện các lệnh sau trong Term
 2.  **Hướng dẫn `chmod +x`:** Đây là bước quan trọng nhất. Nếu không có dòng này trong `README.md`, người khác tải về gõ `./start.sh` sẽ bị báo `Permission denied` (Truy cập bị từ chối) và họ sẽ tưởng tool hỏng.
 3.  **Giao diện trực quan:** Khi có `README.md`, kho code của bạn trên GitHub trông sẽ chuyên nghiệp hơn hẳn, giống như một sản phẩm hoàn thiện.
 ### 🛠️ Cách khắc phục lỗi "bad interpreter" hoặc "^M"
-Nếu bạn chạy `./start.sh` mà báo lỗi, hãy copy và chạy lệnh này:
+Nếu bạn chạy `./start.sh` mà báo lỗi, hãy copy và chạy lệnh này nếu như chạy xong thì chỉ cần bấm lại ./start.sh nó sẽ trả lời bình thường 
 
 ```bash
-sed -i 's/\r$//' start.sh && echo "Đã sửa lỗi định dạng thành công!"
-
-
-Bạn hãy tạo file `README.md` này ngay đi, nó chính là bộ mặt của dự án Werewolf đấy!
+sed -i 's/\r$//' start.sh && echo "Đã sửa lỗi định dạng thành công!
