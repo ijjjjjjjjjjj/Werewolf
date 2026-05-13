@@ -22,4 +22,4 @@ Nếu bạn mới tải tool về, hãy thực hiện các lệnh sau trong Term
 Nếu bạn chạy `./start.sh` mà báo lỗi, hãy copy và chạy lệnh này nếu như chạy xong thì chỉ cần bấm lại ./start.sh nó sẽ trả lời bình thường 
 
 ```bash
-sed -i 's/\r$//' start.sh && echo "Đã sửa lỗi định dạng thành công!
+sed -i 's/\r$//' start.sh
