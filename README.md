@@ -13,7 +13,7 @@ Nếu bạn mới tải tool về, hãy thực hiện các lệnh sau trong Term
    ```bash
    git clone [https://github.com/ijjjjjjjjjjj/Werewolf.git](https://github.com/ijjjjjjjjjjj/Werewolf.git)
    cd Werewolf
-   Nếu gặp lỗi bad interpreter, hãy gõ lệnh sau để sửa lỗi xuống dòng
+   #Nếu gặp lỗi bad interpreter, hãy gõ lệnh sau để sửa lỗi xuống dòng
    sed -i 's/\r$//' start.sh
 ### Tại sao làm vậy là "đàng hoàng"?
 1.  **Chủ động sửa lỗi:** Người dùng không cần biết `sed` là gì, file `start.sh` sẽ tự "dọn rác" cho họ ngay khi vừa chạy.
