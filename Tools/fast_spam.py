@@ -1,6 +1,6 @@
 import requests
 import time
-from core.identity_gen import gen_fake_identity
+from Core.identity_gen import gen_fake_identity
 from colorama import Fore
 
 def start_spam(url):
