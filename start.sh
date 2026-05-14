@@ -1,43 +1,41 @@
 #!/bin/bash
 
-# --- TỰ ĐỘNG SỬA LỖI ĐỊNH DẠNG (Quan trọng cho người dùng Windows/Linux) ---
-sed -i 's/\r$//' start.sh 2>/dev/null
-sed -i 's/\r$//' Core/*.py 2>/dev/null
-sed -i 's/\r$//' Tools/*.py 2>/dev/null
-
+# Màu sắc cho chuyên nghiệp
 G='\033[0;32m'
-Y='\033[0;33m'
 R='\033[0;31m'
+Y='\033[0;33m'
 NC='\033[0m'
 
 clear
-echo -e "${G}==============================================${NC}"
-echo -e "${G}      WEREWOLF ANTI-FRAUD TOOLKIT V1          ${NC}"
-echo -e "${G}==============================================${NC}"
-echo -e "${Y}[!] Đang tự động tối ưu hóa hệ thống...${NC}"
+echo -e "${G}=============================================="
+echo -e "      WEREWOLF ANTI-FRAUD TOOLKIT V2"
+echo -e "   press ./start.sh
+echo -e "==============================================${NC}"
 
-# 1. Tự động cài đặt thư viện
-echo -e "${Y}[*] Đang kiểm tra và cài đặt thư viện...${NC}"
-pip install -r requirements.txt --quiet
-echo -e "${G}[✓] Môi trường đã sẵn sàng!${NC}"
+# 1. NHẬP VÀ KIỂM TRA ĐỊNH DẠNG URL (QUAN TRỌNG)
+echo -ne "${Y}[?] Nhập URL mục tiêu: ${NC}"
+read target
 
-echo ""
-read -p "Nhập URL trang web lừa đảo: " target
+# Nếu người dùng nhập linh tinh (không có http), chặn ngay!
+if [[ ! $target =~ ^https?:// ]]; then
+    echo -e "${R}[!] LỖI: '$target' không phải là địa chỉ web!${NC}"
+    echo -e "${Y}[i] URL hợp lệ phải có dạng: https://vi-du.com${NC}"
+    exit 1
+fi
 
-# 2. Phân tích mục tiêu
-echo -e "${Y}[*] Đang phân tích mục tiêu bằng Core/Check.py...${NC}"
-status=$(python3 Core/Check.py "$target")
+echo -e "${G}[✓] Địa chỉ hợp lệ. Đang tiến hành phân tích...${NC}"
+sleep 1
 
-echo -e "[!] Kết quả: ${G}$status${NC}"
-echo "----------------------------------------------"
+# 2. PHÂN TÍCH BẢO VỆ (Cloudflare Check)
+# Gửi một yêu cầu nhẹ để xem server phản hồi thế nào
+status=$(curl -I -s --max-time 5 "$target" | grep -i "server: cloudflare")
 
-# 3. Kích hoạt vũ khí
-if [ "$status" == "NORMAL" ]; then
-    echo -e "${G}[-->] Web yếu! Đang tấn công...${NC}"
-    python3 Tools/fast_spam.py "$target"
-elif [ "$status" == "CLOUDFLARE_DETECTED" ] || [ "$status" == "CAPTCHA_DETECTED" ]; then
-    echo -e "${Y}[-->] Web bảo vệ cao! Đang dùng Smart Attack...${NC}"
+if [[ ! -z "$status" ]]; then
+    echo -e "${R}[!] CẢNH BÁO: Phát hiện Cloudflare Protection!${NC}"
+    echo -e "${Y}[-->] Chuyển hướng sang chế độ Smart Attack...${NC}"
     python3 Tools/smart_attack.py "$target"
 else
-    echo -e "${R}[!] Không thể kết nối hoặc lỗi lạ.${NC}"
+    echo -e "${G}[+] Mục tiêu không có bảo vệ mạnh.${NC}"
+    echo -e "${Y}[-->] Kích hoạt Fast Spam...${NC}"
+    python3 Tools/fast_spam.py "$target"
 fi
